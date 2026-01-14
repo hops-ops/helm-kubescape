@@ -1,0 +1,55 @@
+# code: language=yaml
+#
+# Helm release for Kubescape - security posture management
+#
+# Defaults:
+# - Enables continuous scanning
+# - Enables vulnerability scanning
+# - Enables configuration scanning
+# - Sets clusterName from XR spec
+#
+
+{{- $k := $state.kubescape }}
+
+---
+apiVersion: helm.m.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: {{ $k.releaseName }}
+  annotations:
+    {{ setResourceNameAnnotation "helm-release-kubescape" }}
+  labels: {{ $k.labels | toJson }}
+spec:
+  managementPolicies: {{ $k.managementPolicies | toJson }}
+  forProvider:
+    chart:
+      name: kubescape-operator
+      repository: https://kubescape.github.io/helm-charts
+      version: 1.30.2
+    namespace: {{ $k.namespace }}
+    {{- if $k.overrideAllValues }}
+    values:
+      {{- toYaml $k.overrideAllValues | nindent 6 }}
+    {{- else }}
+    values:
+      fullnameOverride: kubescape
+      nameOverride: kubescape
+      # Cluster identification
+      clusterName: {{ $k.clusterName }}
+      # Enable continuous scanning
+      capabilities:
+        continuousScan: enable
+        vulnerabilityScan: enable
+        configurationScan: enable
+        nodeScan: enable
+      # Operator settings
+      operator:
+        triggerSecurityFramework: true
+      {{- if $k.values }}
+      {{- toYaml $k.values | nindent 6 }}
+      {{- end }}
+    {{- end }}
+  rollbackLimit: 3
+  providerConfigRef:
+    name: {{ $k.providerConfigRef.name }}
+    kind: {{ $k.providerConfigRef.kind }}

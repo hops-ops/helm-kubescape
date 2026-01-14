@@ -1,0 +1,24 @@
+apiVersion: helm.hops.ops.com.ai/v1alpha1
+kind: Kubescape
+metadata:
+  name: kubescape
+  namespace: default
+spec:
+  clusterName: production-cluster
+  namespace: kubescape
+  labels:
+    team: security
+    environment: production
+  providerConfigRef:
+    name: production-cluster
+    kind: ProviderConfig
+  values:
+    # Resource limits for production
+    operator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
